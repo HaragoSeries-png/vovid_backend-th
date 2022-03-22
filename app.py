@@ -1,3 +1,4 @@
+from email.policy import default
 import os
 from typing import Type
 import json
@@ -5,16 +6,15 @@ from urllib import response
 import requests
 from requests import get
 from flask import Flask, make_response 
-from models.report_data_model import DailyReport
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler
-from datetime import date
+from datetime import date, datetime
 
 
 project_root = os.path.dirname(__file__)
 app = Flask(__name__)
 
-database_name = "vovid-uk"
+database_name = "vovid-th"
 DB_URI = "mongodb+srv://chanon:132231@cluster0.broqy.mongodb.net/vovid-th?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
 app.config["MONGODB_HOST"] = DB_URI
 db = MongoEngine()
@@ -78,16 +78,16 @@ def todayCases():
    print(type(responseData))
    return responseData
 
-# @app.route("/api/today-cases",methods=['get'])
-# def monthCases():
-#    today = date.today()
+@app.route("/api/today-cases",methods=['get'])
+def monthCases():
+   today = date.today()
 
-#    today_date = today.isoformat()
+   today_date = today.isoformat()
 
-#    print("today date is "+today_date)
-#    responseData = Daily_report.objects(date=today_date).to_json()
-#    print(type(responseData))
-#    return responseData
+   print("today date is "+today_date)
+   responseData = Daily_report.objects(date=today_date).to_json()
+   print(type(responseData))
+   return responseData
 
 def ss():
    print("cron job activate")
@@ -134,6 +134,7 @@ class Daily_report(db.Document):
    newDeath = db.IntField()
    death = db.IntField()
    province = db.StringField()
+   create_at = db.DateTimeField(default=datetime.now)
 
    def toJson(self):
       return {
@@ -142,9 +143,6 @@ class Daily_report(db.Document):
          "deathNew":self.deathNew
       }
 
-# app.register_blueprint(daily_report)
 
 if __name__ == "__main__":
-
    app.run()
-   print("hoho")
