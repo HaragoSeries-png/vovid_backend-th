@@ -8,6 +8,7 @@ from flask import Flask, make_response
 from models.report_data_model import DailyReport
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler
+from datetime import date
 
 
 project_root = os.path.dirname(__file__)
@@ -24,8 +25,8 @@ scheduler.init_app(app)
 scheduler.start()
 
 
-@app.route("/30-day")
-def show():
+@app.route("/30-day",methods=['POST'])
+def timeline():
    url = "https://covid19.ddc.moph.go.th/api/Cases/timeline-cases-by-provinces"
    response = get(url)
    jsonText = json.loads(response.text)
@@ -45,9 +46,49 @@ def show():
       # print(content["province"]+" have " + str(arr.count(content["province"])))
       report.save()
    # print(type(response))
+   return make_response()
+
+@app.route("/daily",methods=['POST'])
+@scheduler.task('cron', id='do_job_2', day='*',hour='9', minute='0')
+def dailyFunc():
+   url = "https://covid19.ddc.moph.go.th/api/Cases/today-cases-by-provinces"
+   response = get(url)
+   jsonText = json.loads(response.text)
+   for i in range(78):
+      content = jsonText[i]
+      report  = Daily_report(
+         date = content["txn_date"],
+         newCase = content["new_case"],
+         totalCase = content["total_case"],
+         newDeath = content["new_death"],
+         death = content["total_death"],
+         province = content["province"]
+      )
+      report.save()
    return "content"
 
-@scheduler.task('cron', id='do_job_2', day='*',hour='9', minute='0')
+@app.route("/api/today-cases",methods=['get'])
+def todayCases():
+   today = date.today()
+
+   today_date = today.isoformat()
+
+   print("today date is "+today_date)
+   responseData = Daily_report.objects(date=today_date).to_json()
+   print(type(responseData))
+   return responseData
+
+# @app.route("/api/today-cases",methods=['get'])
+# def monthCases():
+#    today = date.today()
+
+#    today_date = today.isoformat()
+
+#    print("today date is "+today_date)
+#    responseData = Daily_report.objects(date=today_date).to_json()
+#    print(type(responseData))
+#    return responseData
+
 def ss():
    print("cron job activate")
 
