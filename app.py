@@ -90,9 +90,8 @@ def todayCases2():
   
    while len(date_arr)<7:
       today_date = curr_date.isoformat()
-      print("today date is "+today_date)
       date_arr.append(today_date)      
-      qData = Daily_report.objects(date=today_date).exclude(*exc_field).to_json()
+      qData = Daily_report.objects(date=today_date).exclude(*exc_field).order_by("location").to_json()
       reData ={"date":today_date,"result":json.loads(qData)}
       curr_date = curr_date-timedelta(days=1)   
       data_arr.append(reData)
