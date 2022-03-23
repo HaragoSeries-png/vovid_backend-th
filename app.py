@@ -5,11 +5,10 @@ import json
 from urllib import response
 import requests
 from requests import get
-from flask import Flask, make_response 
+from flask import Flask, make_response ,request
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler
-from datetime import date, datetime
-from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import date, datetime,timedelta
 
 
 project_root = os.path.dirname(__file__)
@@ -21,7 +20,7 @@ app.config["MONGODB_HOST"] = DB_URI
 db = MongoEngine()
 db.init_app(app)
 
-scheduler = BlockingScheduler()
+
 
 
 @app.route("/30-day",methods=['POST'])
@@ -39,7 +38,7 @@ def timeline():
          totalCase = content["total_case"],
          newDeath = content["new_death"],
          death = content["total_death"],
-         province = content["province"]
+         location = content["province"]
       )
       # arr.append(content["province"])
       # print(content["province"]+" have " + str(arr.count(content["province"])))
@@ -48,7 +47,6 @@ def timeline():
    return make_response()
 
 @app.route("/daily",methods=['POST'])
-@scheduler.scheduled_job('cron', id='fetch_daily', day='*',hour='9', minute='0')
 def dailyFunc():
    url = "https://covid19.ddc.moph.go.th/api/Cases/today-cases-by-provinces"
    response = get(url)
@@ -61,23 +59,47 @@ def dailyFunc():
          totalCase = content["total_case"],
          newDeath = content["new_death"],
          death = content["total_death"],
-         province = content["province"]
+         location = content["province"]
       )
       report.save()
    return "content"
 
-@app.route("/api/today-cases",methods=['get'])
+@app.route("/api/weekly-cases2",methods=['get'])
 def todayCases():
    today = date.today()
-
-   today_date = today.isoformat()
-
-   print("today date is "+today_date)
-   responseData = Daily_report.objects(date=today_date).to_json()
-   print(type(responseData))
+   curr_date = today
+   date_arr = []
+   exc_field = ["id","created_at"]
+  
+   while len(date_arr)<7:
+      today_date = curr_date.isoformat()
+      print("today date is "+today_date)
+      date_arr.append(today_date)
+      curr_date = curr_date-timedelta(days=1)
+   
+   responseData = Daily_report.objects(date__in=date_arr).exclude(*exc_field).to_json()
    return responseData
 
-@app.route("/api/today-cases",methods=['get'])
+@app.route("/api/weekly-cases",methods=['get'])
+def todayCases2():
+   today = date.today()
+   curr_date = today
+   date_arr = []
+   exc_field = ["id","created_at"]
+   data_arr = []
+  
+   while len(date_arr)<7:
+      today_date = curr_date.isoformat()
+      print("today date is "+today_date)
+      date_arr.append(today_date)      
+      qData = Daily_report.objects(date=today_date).exclude(*exc_field).to_json()
+      reData ={"date":today_date,"result":json.loads(qData)}
+      curr_date = curr_date-timedelta(days=1)   
+      data_arr.append(reData)
+
+   return json.dumps(data_arr)
+
+@app.route("/api/month-cases",methods=['get'])
 def monthCases():
    today = date.today()
 
@@ -125,15 +147,13 @@ def show2():
 
 class Daily_report(db.Document):
 
-   report_id = db.IntField()
-
    date = db.StringField()
    newCase = db.IntField()
    totalCase = db.IntField()
    newDeath = db.IntField()
    death = db.IntField()
-   province = db.StringField()
-   create_at = db.DateTimeField(default=datetime.now)
+   location = db.StringField()
+   created_at = db.DateTimeField(default=datetime.now)
 
    def toJson(self):
       return {
