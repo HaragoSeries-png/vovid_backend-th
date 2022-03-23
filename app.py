@@ -9,6 +9,7 @@ from flask import Flask, make_response
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler
 from datetime import date, datetime
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 
 project_root = os.path.dirname(__file__)
@@ -20,9 +21,7 @@ app.config["MONGODB_HOST"] = DB_URI
 db = MongoEngine()
 db.init_app(app)
 
-scheduler = APScheduler()
-scheduler.init_app(app)
-scheduler.start()
+scheduler = BlockingScheduler()
 
 
 @app.route("/30-day",methods=['POST'])
@@ -49,7 +48,7 @@ def timeline():
    return make_response()
 
 @app.route("/daily",methods=['POST'])
-@scheduler.task('cron', id='do_job_2', day='*',hour='9', minute='0')
+@scheduler.scheduled_job('cron', id='fetch_daily', day='*',hour='9', minute='0')
 def dailyFunc():
    url = "https://covid19.ddc.moph.go.th/api/Cases/today-cases-by-provinces"
    response = get(url)
@@ -115,7 +114,7 @@ def show2():
          "total_cases":value["total_cases"],
          "new_deaths":value["new_deaths"],
          "total_deaths":value["total_deaths"],
-         "last_updateed_date":value["last_updated_date"]
+         "last_updated_date":value["last_updated_date"]
       }
       reList.append(re)
    # report = Daily_report(report_id = 1, date = "20-10",death=10,deathNew=50)
