@@ -1,18 +1,17 @@
-from email.policy import default
 import os
 from typing import Type
 import json
-from urllib import response
-import requests
 from requests import get
 from flask import Flask, make_response ,request
 from flask_mongoengine import MongoEngine
 from flask_apscheduler import APScheduler
 from datetime import date, datetime,timedelta
+from flask_cors import CORS,cross_origin
 
 
 project_root = os.path.dirname(__file__)
 app = Flask(__name__)
+CORS(app)
 
 database_name = "vovid-th"
 DB_URI = "mongodb+srv://chanon:132231@cluster0.broqy.mongodb.net/vovid-th?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
@@ -47,6 +46,7 @@ def timeline():
    return make_response()
 
 @app.route("/daily",methods=['POST'])
+
 def dailyFunc():
    url = "https://covid19.ddc.moph.go.th/api/Cases/today-cases-by-provinces"
    response = get(url)
@@ -164,3 +164,4 @@ class Daily_report(db.Document):
 
 if __name__ == "__main__":
    app.run()
+   
