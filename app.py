@@ -46,11 +46,16 @@ def timeline():
    return make_response()
 
 @app.route("/daily",methods=['POST'])
-
 def dailyFunc():
    url = "https://covid19.ddc.moph.go.th/api/Cases/today-cases-by-provinces"
    response = get(url)
    jsonText = json.loads(response.text)
+   recent_date = jsonText[0]["txn_date"]
+   print(recent_date)
+   if Daily_report.objects(date= recent_date):
+      print("alredy update")
+      print("end daily fuc")
+      return "end"
    for i in range(78):
       content = jsonText[i]
       report  = Daily_report(
@@ -62,6 +67,7 @@ def dailyFunc():
          location = content["province"]
       )
       report.save()
+      print("save complete")
    return "content"
 
 @app.route("/api/weekly-cases2",methods=['get'])
@@ -77,7 +83,7 @@ def todayCases():
       date_arr.append(today_date)
       curr_date = curr_date-timedelta(days=1)
    
-   responseData = Daily_report.objects(date__in=date_arr).exclude(*exc_field).to_json()
+   responseData = Daily_report.objects(date__in=date_arr).exclude(*exc_field).distinct(field="location").to_json()
    return responseData
 
 @app.route("/api/weekly-cases",methods=['get'])
