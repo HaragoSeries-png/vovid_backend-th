@@ -29,7 +29,7 @@ def timeline():
    jsonText = json.loads(response.text)
    jsonText.reverse()
    arr = []
-   for i in range(78*7):
+   for i in range(78*30):
       content = jsonText[i]
       report  = Daily_report(
          date = content["txn_date"],
@@ -88,8 +88,12 @@ def todayCases():
 
 @app.route("/api/weekly-cases",methods=['get'])
 def todayCases2():
+   args = request.args
+   
    today = date.today()
-   curr_date = today
+   yesterday = today-timedelta(days=1) 
+   args.get("date", default=yesterday.isoformat(), type=str)
+   curr_date = yesterday
    date_arr = []
    exc_field = ["id","created_at"]
    data_arr = []
@@ -101,6 +105,25 @@ def todayCases2():
       reData ={"date":today_date,"result":json.loads(qData)}
       curr_date = curr_date-timedelta(days=1)   
       data_arr.append(reData)
+
+   return json.dumps(data_arr)
+
+@app.route("/api/cases",methods=['get'])
+def Cases2():
+   args = request.args
+   
+   today = date.today()
+   yesterday = today-timedelta(days=1) 
+   qdate = args.get("date", default=yesterday.isoformat(), type=str)
+   curr_date = yesterday
+   date_arr = []
+   exc_field = ["id","created_at"]
+   data_arr = []
+  
+     
+   qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by("location").to_json()
+   reData ={"date":qdate,"result":json.loads(qData)}  
+   data_arr.append(reData)
 
    return json.dumps(data_arr)
 
