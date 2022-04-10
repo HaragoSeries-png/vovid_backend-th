@@ -127,6 +127,58 @@ def Cases2():
 
    return json.dumps(data_arr)
 
+@app.route("/api/sum-of-cases",methods=['get'])
+def sumnOfCases():
+   args = request.args
+   
+   today = date.today()
+   yesterday = today-timedelta(days=1) 
+   f_date = args.get("from", default=(yesterday-timedelta(days=7)).isoformat(), type=str)
+   t_date = args.get("to", default=yesterday.isoformat(), type=str)
+   arr = []
+   
+   print(f_date)
+   print(t_date)  
+   # locations = Daily_report.objects(date=yesterday.isoformat()).only("location").exclude("id").order_by("location").to_json()
+   from_data = Daily_report.objects(date=f_date).exclude("id").order_by("location").to_json()
+   to_data =Daily_report.objects(date=t_date).exclude("id").order_by("location").to_json()
+
+   for f,t in zip(json.loads(from_data),json.loads(to_data)) :
+      print("location : "+f["location"])
+      obj = {"location":f["location"],"sum-case":t["totalCase"]-f["totalCase"]}
+      arr.append(obj)
+   return json.dumps(arr)
+
+@app.route("/api/sum-of",methods=['get'])
+def sumnOfCases2():
+   args = request.args
+   
+   today = date.today()
+   yesterday = today-timedelta(days=1) 
+   r_date = args.get("range", default=7, type=int)
+   # t_date = args.get("to", default=yesterday.isoformat(), type=str)
+   curr_date = yesterday
+   arr = []
+   
+   # print(f_date)
+   # print(t_date)  
+   for i in range(r_date):
+      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newDeath","newCase").exclude("id").order_by("location").to_json())
+      
+      sum_of_deaths = 0
+      sum_of_cases = 0
+
+      if locations_list:
+         sum_of_deaths = sum(i["newDeath"] for i in locations_list)
+         sum_of_cases = sum(i["newCase"] for i in locations_list)
+
+      obj = {"date":curr_date.isoformat(),"sum_of_death":sum_of_deaths,"sum_of_cases":sum_of_cases}  
+      arr.append(obj)
+      curr_date = curr_date-timedelta(days = 1)
+
+
+   return json.dumps(arr)
+
 @app.route("/api/month-cases",methods=['get'])
 def monthCases():
    today = date.today()
