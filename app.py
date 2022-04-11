@@ -127,7 +127,7 @@ def Cases2():
 
    return json.dumps(data_arr)
 
-@app.route("/api/sum-of-cases",methods=['get'])
+@app.route("/api/sum-of-cases-range",methods=['get'])
 def sumnOfCases():
    args = request.args
    
@@ -149,7 +149,7 @@ def sumnOfCases():
       arr.append(obj)
    return json.dumps(arr)
 
-@app.route("/api/sum-of",methods=['get'])
+@app.route("/api/sum-of-cases",methods=['get'])
 def sumnOfCases2():
    args = request.args
    
@@ -163,16 +163,42 @@ def sumnOfCases2():
    # print(f_date)
    # print(t_date)  
    for i in range(r_date):
-      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newDeath","newCase").exclude("id").order_by("location").to_json())
+      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newCase").exclude("id").order_by("location").to_json())
       
-      sum_of_deaths = 0
       sum_of_cases = 0
 
       if locations_list:
-         sum_of_deaths = sum(i["newDeath"] for i in locations_list)
          sum_of_cases = sum(i["newCase"] for i in locations_list)
 
-      obj = {"date":curr_date.isoformat(),"sum_of_death":sum_of_deaths,"sum_of_cases":sum_of_cases}  
+      obj = {"date":curr_date.isoformat(),"sum_of_cases":sum_of_cases}  
+      arr.append(obj)
+      curr_date = curr_date-timedelta(days = 1)
+
+
+   return json.dumps(arr)
+
+@app.route("/api/sum-of-deaths",methods=['get'])
+def sumnOfDeath():
+   args = request.args
+   
+   today = date.today()
+   yesterday = today-timedelta(days=1) 
+   r_date = args.get("range", default=7, type=int)
+   # t_date = args.get("to", default=yesterday.isoformat(), type=str)
+   curr_date = yesterday
+   arr = []
+   
+   # print(f_date)
+   # print(t_date)  
+   for i in range(r_date):
+      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newDeath").exclude("id").order_by("location").to_json())
+      
+      sum_of_deaths = 0
+
+      if locations_list:
+         sum_of_deaths = sum(i["newDeath"] for i in locations_list)
+
+      obj = {"date":curr_date.isoformat(),"sum_of_death":sum_of_deaths}  
       arr.append(obj)
       curr_date = curr_date-timedelta(days = 1)
 
