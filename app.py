@@ -235,6 +235,41 @@ def sumnOf():
 
    return json.dumps(arr)
 
+@app.route("/api/daily-data",methods=['get'])
+def daily_data():
+   args = request.args
+   
+   today = date.today()
+   yesterday = today-timedelta(days=1) 
+   r_date = args.get("date", default=yesterday.isoformat(), type=str)
+   # t_date = args.get("to", default=yesterday.isoformat(), type=str)
+   arr = []
+   
+   # print(f_date)
+   # print(t_date)  
+
+   locations_list = json.loads(Daily_report.objects(date=r_date).only("location","newDeath","newCase","death","totalCase").exclude("id").order_by("location").to_json())
+   
+   new_deaths = 0
+   new_cases = 0
+
+   if locations_list:
+      new_deaths = sum(i["newDeath"] for i in locations_list)
+      new_cases = sum(i["newCase"] for i in locations_list)
+      total_death = sum(i["death"] for i in locations_list)
+      total_cases = sum(i["totalCase"] for i in locations_list)
+
+   obj = {"date":r_date,
+   "new_deaths":new_deaths,
+   "new_cases":new_cases,
+   "total_deaths":total_death,
+   "total_cases":total_cases
+   }  
+
+
+
+   return json.dumps(obj)
+
 
 
 @app.route("/api/month-cases",methods=['get'])
