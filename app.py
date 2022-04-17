@@ -252,6 +252,8 @@ def daily_data():
    
    new_deaths = 0
    new_cases = 0
+   total_death = 0
+   total_cases = 0
 
    if locations_list:
       new_deaths = sum(i["newDeath"] for i in locations_list)
