@@ -219,16 +219,25 @@ def sumnOf():
    # print(f_date)
    # print(t_date)  
    for i in range(r_date):
-      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newDeath","newCase").exclude("id").order_by("location").to_json())
+      locations_list = json.loads(Daily_report.objects(date=curr_date.isoformat()).only("location","newDeath","newCase","death","totalCase").exclude("id").order_by("location").to_json())
       
-      sum_of_deaths = 0
-      sum_of_cases = 0
+      new_deaths = 0
+      new_cases = 0
+      total_death = 0
+      total_cases = 0
 
       if locations_list:
-         sum_of_deaths = sum(i["newDeath"] for i in locations_list)
-         sum_of_cases = sum(i["newCase"] for i in locations_list)
+         new_deaths = sum(i["newDeath"] for i in locations_list)
+         new_cases = sum(i["newCase"] for i in locations_list)
+         total_death = sum(i["death"] for i in locations_list)
+         total_cases = sum(i["totalCase"] for i in locations_list)
 
-      obj = {"date":curr_date.isoformat(),"sum_of_death":sum_of_deaths,"sum_of_cases":sum_of_cases}  
+      obj = {"date":curr_date.isoformat(),
+         "new_deaths":new_deaths,
+         "new_cases":new_cases,
+         "total_deaths":total_death,
+         "total_cases":total_cases
+      }  
       arr.append(obj)
       curr_date = curr_date-timedelta(days = 1)
 
