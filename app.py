@@ -4,9 +4,8 @@ import json
 from requests import get
 from flask import Flask, make_response ,request
 from flask_mongoengine import MongoEngine
-from flask_apscheduler import APScheduler
 from datetime import date, datetime,timedelta
-from flask_cors import CORS,cross_origin
+from flask_cors import CORS
 
 
 project_root = os.path.dirname(__file__)
@@ -156,8 +155,9 @@ def sumnOfCases2():
    today = date.today()
    yesterday = today-timedelta(days=1) 
    r_date = args.get("range", default=7, type=int)
+   start_date = args.get("date",default=yesterday.isoformat(),type=str)
    # t_date = args.get("to", default=yesterday.isoformat(), type=str)
-   curr_date = yesterday
+   curr_date = date.fromisoformat(start_date) 
    arr = []
    
    # print(f_date)
@@ -184,8 +184,9 @@ def sumnOfDeath():
    today = date.today()
    yesterday = today-timedelta(days=1) 
    r_date = args.get("range", default=7, type=int)
+   start_date = args.get("date",default=yesterday.isoformat(),type=str)
    # t_date = args.get("to", default=yesterday.isoformat(), type=str)
-   curr_date = yesterday
+   curr_date = date.fromisoformat(start_date) 
    arr = []
    
    # print(f_date)
@@ -212,8 +213,9 @@ def sumnOf():
    today = date.today()
    yesterday = today-timedelta(days=1) 
    r_date = args.get("range", default=7, type=int)
+   start_date = args.get("date",default=yesterday.isoformat(),type=str)
    # t_date = args.get("to", default=yesterday.isoformat(), type=str)
-   curr_date = yesterday
+   curr_date = date.fromisoformat(start_date) 
    arr = []
    
    # print(f_date)
@@ -276,12 +278,7 @@ def daily_data():
    "total_deaths":total_death,
    "total_cases":total_cases
    }  
-
-
-
    return json.dumps(obj)
-
-
 
 @app.route("/api/month-cases",methods=['get'])
 def monthCases():
