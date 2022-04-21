@@ -291,9 +291,6 @@ def monthCases():
    print(type(responseData))
    return responseData
 
-def ss():
-   print("cron job activate")
-
 @app.route("/2")
 def show2():
    url = "https://raw.github.com/owid/covid-19-data/master/public/data/latest/owid-covid-latest.json"
@@ -325,6 +322,10 @@ def show2():
    # report.save()
    return json.dumps(reList)
 
+@app.route("api/ml")
+def ml():
+   s= Daily_report.objects().only("location","newDeath","newCase","death","totalCase","date").exclude("id").order_by("location").to_json()
+   return json.dumps(s)
 
 class Daily_report(db.Document):
 
