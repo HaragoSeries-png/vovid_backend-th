@@ -322,7 +322,7 @@ def show2():
    # report.save()
    return json.dumps(reList)
 
-@app.route("api/ml")
+@app.route("/api/ml")
 def ml():
    s= Daily_report.objects().only("location","newDeath","newCase","death","totalCase","date").exclude("id").order_by("location").to_json()
    return json.dumps(s)
