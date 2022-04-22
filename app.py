@@ -1,4 +1,6 @@
+from dbm import dumb
 import os
+import random
 from typing import Type
 import json
 from requests import get
@@ -326,6 +328,17 @@ def show2():
 def ml():
    s= Daily_report.objects().only("location","newDeath","newCase","death","totalCase","date").exclude("id").order_by("location").to_json()
    return s
+
+@app.route("/api/cluster")
+def cluster():
+   args = request.args
+   feature = args.get("feature", default="location", type=str)
+   s= json.loads(Daily_report.objects(date="2022-04-01").only("location").exclude("id").order_by("location").to_json())
+   arr = []
+   for da in s:
+      obj = {"location":da["location"],"cluster":random.randint(0,4)}
+      arr.append(obj)
+   return json.dumps(arr)
 
 class Daily_report(db.Document):
 
