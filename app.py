@@ -8,6 +8,8 @@ from flask import Flask, make_response ,request
 from flask_mongoengine import MongoEngine
 from datetime import date, datetime,timedelta
 from flask_cors import CORS
+import pickle
+import pandas as pd
 
 
 project_root = os.path.dirname(__file__)
@@ -324,6 +326,129 @@ def show2():
    # report.save()
    return json.dumps(reList)
 
+cluster_name = ["new_case_cluster","total_case_cluster","new_death_cluster","total_death_cluster"]
+s_c = ["newCase","totalCase","newDeath","death"]
+
+@app.route("/api/ml2")
+def ml2():
+   dataProvince = [
+    ["th-kr", 10], 
+    ["th-bm", 10], 
+    ["th-kn", 0], 
+    ["th-kl", 10],
+    ["th-kp", 10],
+    ["th-kk", 10],
+    ["th-ct", 10], 
+    ["th-cc", 10],
+    ["th-cb", 10], 
+    ["th-cn", 10], 
+    ["th-cy", 0],
+    ["th-cp", 0], 
+    ["th-tg",10],
+    ["th-tt", 10], 
+    ["th-tk", 0], 
+    ["th-nn", 10], 
+    ["th-np", 10],
+    ["th-nf", 0], 
+    ["th-nr", 10],
+    ["th-nt", 0], 
+    ["th-ns", 0], 
+    ["th-no", 10],
+    ["th-nw", 0],
+    ["th-na", 0],
+    ["th-bk", 0],
+    ["th-br", 10], 
+    ["th-pt", 10],
+    ["th-pk", 0], 
+    ["th-pb", 0], 
+    ["th-pi", 0],
+    ["th-pa", 10],
+    ["th-py", 0],
+    ["th-pg", 10],
+    ["th-pl", 10], 
+    ["th-pc", 10], 
+    ["th-ps", 10], 
+    ["th-pu", 0], 
+    ["th-ms", 0], 
+    ["th-md", 0], 
+    ["th-yl", 0], 
+    ["th-ys", 0], 
+    ["th-rn", 0], 
+    ["th-ry", 0],
+    ["th-rt", 0], 
+    ["th-re", 10], 
+    ["th-lb", 10], 
+    ["th-lg", 0], 
+    ["th-ln", 0], 
+    ["th-si", 10], 
+    ["th-sn", 0],
+    ["th-sg", 0], 
+    ["th-sa", 10], 
+    ["th-sp", 10], 
+    ["th-sm", 10], 
+    ["th-ss", 10], 
+    ["th-sr", 10], 
+    ["th-sk", 0], 
+    ["th-sb", 10], 
+    ["th-sh", 10], 
+    ["th-st", 10], 
+    ["th-su", 0], 
+    ["th-so", 0], 
+    ["th-nk", 0],
+    ["th-nb", 0], 
+    ["th-ac", 0], 
+    ["th-un", 0], 
+    ["th-ud", 0], 
+    ["th-ut", 0], 
+    ["th-ur", 0], 
+    ["th-at", 10],
+    ["th-cr", 0], 
+    ["th-cm", 0], 
+    ["th-pe", 10], 
+    ["th-ph", 10], 
+    ["th-le", 0],
+    ["th-pr", 0], 
+    ["th-mh", 0], 
+  ]
+   args = request.args
+   cluster_r = args.get("cluster",type=str)
+   if cluster_r not in s_c:
+      return "wrong"
+
+   idx_o = s_c.index(cluster_r)
+   day = date.today()
+   while True:
+      s= Daily_report.objects(date=day.isoformat()).only("location",s_c[idx_o]).exclude("id").order_by("location")
+      if len(s)>0:
+         s = s.to_json()
+         break
+      day = day-timedelta(days=1) 
+
+   filename ='models/'+cluster_name[idx_o]+'_model.pkl'
+   model = pickle.load(open(filename,'rb'))
+
+   df = pd.read_json(s)
+   y = model.predict(df[{s_c[idx_o]}])
+   
+
+   clll = []
+   for i in range(len(model.cluster_centers_)):
+      obj ={"cluster":i,"value":model.cluster_centers_[i][0]} 
+      clll.append(obj)
+   newlist = sorted(clll, key=lambda d: d['value']) 
+   cld={}
+   for i in range(len(newlist)):
+      cld[newlist[i]["cluster"]] = i+1
+
+   for i in range(len(dataProvince)):      
+      dataProvince[i][1] = cld[y[i]]
+   res = {
+      "date" : day.isoformat(),
+      "dataProvince":dataProvince
+   }
+
+   return res
+
 @app.route("/api/ml")
 def ml():
    s= Daily_report.objects().only("location","newDeath","newCase","death","totalCase","date").exclude("id").order_by("location").to_json()
@@ -339,6 +464,17 @@ def cluster():
       obj = {"location":da["location"],"cluster":random.randint(0,4)}
       arr.append(obj)
    return json.dumps(arr)
+
+def mm_util(dataFrame):
+  for w_index in range(4):
+    print(s_c[w_index])
+    for i in range(5):
+      td = dataFrame[dataFrame[cluster_name[w_index]]==i][s_c[w_index]]
+      max = td.max()
+      min = td.min()    
+      count = len(td)  
+      print('cluster '+str(i)+' max = '+str(max)+' min = '+str(min)+" have " + str(count)+" record")
+    print("-----------------")
 
 class Daily_report(db.Document):
 
@@ -356,6 +492,15 @@ class Daily_report(db.Document):
          "death":self.death,
          "deathNew":self.deathNew
       }
+class Cluster_data(db.Document):
+
+   date = db.StringField()
+   location = db.StringField()
+   new_case_cluster = db.StringField()
+   total_case_cluster = db.StringField()
+   new_death_cluster = db.StringField()
+   total_death_cluster = db.StringField()
+   created_at = db.DateTimeField(default=datetime.now)
 
 
 if __name__ == "__main__":
