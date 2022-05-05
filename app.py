@@ -331,6 +331,7 @@ s_c = ["newCase","totalCase","newDeath","death"]
 
 @app.route("/api/cluster")
 def cluster():
+   req_enum = ["new-cases","total-cases","new-deaths","total-deaths"]
    dataProvince = [
     ["th-kr", 10], 
     ["th-bm", 10], 
@@ -412,10 +413,10 @@ def cluster():
   ]
    args = request.args
    cluster_r = args.get("cluster",type=str)
-   if cluster_r not in s_c:
-      return "wrong"
+   if cluster_r not in req_enum:
+      return "wrong. try new-cases, total-cases, new-deaths, total-deaths"
 
-   idx_o = s_c.index(cluster_r)
+   idx_o = req_enum.index(cluster_r)
    day = date.today()
    while True:
       s= Daily_report.objects(date=day.isoformat()).only("location",s_c[idx_o]).exclude("id").order_by("location")
