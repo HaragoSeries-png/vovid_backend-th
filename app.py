@@ -329,8 +329,8 @@ def show2():
 cluster_name = ["new_case_cluster","total_case_cluster","new_death_cluster","total_death_cluster"]
 s_c = ["newCase","totalCase","newDeath","death"]
 
-@app.route("/api/ml2")
-def ml2():
+@app.route("/api/cluster")
+def cluster():
    dataProvince = [
     ["th-kr", 10], 
     ["th-bm", 10], 
@@ -454,16 +454,7 @@ def ml():
    s= Daily_report.objects().only("location","newDeath","newCase","death","totalCase","date").exclude("id").order_by("location").to_json()
    return s
 
-@app.route("/api/cluster")
-def cluster():
-   args = request.args
-   feature = args.get("feature", default="location", type=str)
-   s= json.loads(Daily_report.objects(date="2022-04-01").only("location").exclude("id").order_by("location").to_json())
-   arr = []
-   for da in s:
-      obj = {"location":da["location"],"cluster":random.randint(0,4)}
-      arr.append(obj)
-   return json.dumps(arr)
+
 
 def mm_util(dataFrame):
   for w_index in range(4):
