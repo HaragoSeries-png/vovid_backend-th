@@ -120,15 +120,16 @@ def Cases2():
    today = date.today()
    yesterday = today-timedelta(days=1) 
    qdate = args.get("date", default=yesterday.isoformat(), type=str)
-   order = args.get("order",default="newDeath", type=str)
+   order = args.get("order",default="location", type=str)
    by_string = args.get("by",default="desc", type=str)
    curr_date = yesterday
    date_arr = []
    exc_field = ["id","created_at"]
    data_arr = []
    by = "-"
-   if order not in req_enum:
-      return "order name wrong. try new-cases, total-cases, new-deaths, total-deaths"
+   if order not in req_enum :
+      if order != "location":
+         return "order name wrong. try new-cases, total-cases, new-deaths, total-deaths"
 
    if by_string in order_con:
       if by_string == "asc": 
@@ -136,9 +137,12 @@ def Cases2():
    else:
       return "by wrong. please choose between asc||desc"
    
-   idx = req_enum.index(order)
-     
-   qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by(by+s_c[idx]).to_json()
+   if order != "location":
+      idx = req_enum.index(order)    
+      qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by(by+s_c[idx]).to_json()
+
+   else:
+      qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by("location").to_json()
    reData ={"date":qdate,"result":json.loads(qData)}  
    data_arr.append(reData)
 
