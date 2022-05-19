@@ -111,6 +111,8 @@ def todayCases2():
 
    return json.dumps(data_arr)
 
+order_con = ["asc","desc"]
+
 @app.route("/api/cases",methods=['get'])
 def Cases2():
    args = request.args
@@ -118,13 +120,25 @@ def Cases2():
    today = date.today()
    yesterday = today-timedelta(days=1) 
    qdate = args.get("date", default=yesterday.isoformat(), type=str)
+   order = args.get("order",default="newDeath", type=str)
+   by_string = args.get("by",default="desc", type=str)
    curr_date = yesterday
    date_arr = []
    exc_field = ["id","created_at"]
    data_arr = []
-  
+   by = "-"
+   if order not in req_enum:
+      return "order name wrong. try new-cases, total-cases, new-deaths, total-deaths"
+
+   if by_string in order_con:
+      if by_string == "asc": 
+         by=""
+   else:
+      return "by wrong. please choose between asc||desc"
+   
+   idx = req_enum.index(order)
      
-   qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by("location").to_json()
+   qData = Daily_report.objects(date=qdate).exclude(*exc_field).order_by(by+s_c[idx]).to_json()
    reData ={"date":qdate,"result":json.loads(qData)}  
    data_arr.append(reData)
 
@@ -326,12 +340,13 @@ def show2():
    # report.save()
    return json.dumps(reList)
 
+req_enum = ["new-cases","total-cases","new-deaths","total-deaths"]
 cluster_name = ["new_case_cluster","total_case_cluster","new_death_cluster","total_death_cluster"]
 s_c = ["newCase","totalCase","newDeath","death"]
 
 @app.route("/api/cluster")
 def cluster():
-   req_enum = ["new-cases","total-cases","new-deaths","total-deaths"]
+   
    dataProvince = [
     ["th-kr", 10], 
     ["th-bm", 10], 
